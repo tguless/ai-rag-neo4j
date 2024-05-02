@@ -20,7 +20,7 @@ v1.2, 2016-02-15
 
 image::nl_to_json.png[natural_language_to_json]
 
-This Spring AI based project is meant to demonstrate how Retrieval Augmented Generation (RAG) can be used to generate a request to a https://en.wikipedia.org/wiki/GTFS[GTFS] API as provided by the project https://github.com/tguless/neo4j-gtfs[neo4j-gtfs] using Natural Language.
+This https://spring.io/projects/spring-ai[Spring AI] based project is meant to demonstrate how https://en.wikipedia.org/wiki/Prompt_engineering#Retrieval-augmented_generation[Retrieval Augmented Generation (RAG)] can be used to generate a request to a https://en.wikipedia.org/wiki/GTFS[GTFS] API as provided by the project https://github.com/tguless/neo4j-gtfs[neo4j-gtfs] using Natural Language.
 
 The computer readable response from the API can then be narrated back to the user in Natural Language using GPT.
 
