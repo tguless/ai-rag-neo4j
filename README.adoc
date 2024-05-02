@@ -1,0 +1,122 @@
+= Natural Language Interface to neo4j-gtfs
+v1.2, 2016-02-15
+:library: Asciidoctor
+:include:
+:idprefix:
+:numbered:
+:imagesdir: docs
+:toc: manual
+:css-signature: demo
+:toc-placement: preamble
+:toc:
+:icons: font
+:source-highlighter: prettify
+:project_id: ai-rag-neo4j
+:sectanchors: ad
+
+
+
+== Project Overview
+
+This Spring AI based project is meant to demonstrate how Retrieval Augmented Generation (RAG) can be used to generate a request to a GTFS API as provided by the project https://github.com/tguless/neo4j-gtfs[neo4j-gtfs] using Natural Language.
+
+The computer readable response from the API can then be narrated back to the user in Natural Language using GPT.
+
+The database and API used for performing retrievals rely on the project hosted at https://github.com/tguless/neo4j-gtfs[neo4j-gtfs] originally developed by @tguless in 2016 to help calculate travel plans using the open GTFS transit plan file format by leveraging a Neo4j graph database.
+
+image::nl_to_json.png[natural_language_to_json]
+
+== Example Execution Output
+
+Initial GPT-4 Prompt:
+----
+Today is Wed May 01 2024 21:44:39 GMT-0400 (EDT). Given the prompt:
+
+"I am going to leave from Westwood train station in NJ to go to point pleasant NJ after 9am on Friday"
+
+I need to convert any relevant dates in the prompt (there may be multiple) to Javascript Date format.
+
+To do it, give me the JS commands to execute without using variables in the format:
+{
+     '{datetyperequested}' : '{js command to run to set a js variable to the date value as Date object}',
+     '{2nd datetyperequested}' : '{js command to run to set a js variable to the date value as Date object}'
+}
+
+Make sure to only return properly formatted json and nothing else in your response. Make sure all the required dates are included in the JSON object.
+----
+
+Initial GPT-4 Prompt Response:
+
+----
+{
+    "departureTime": "new Date('2024-05-03T09:00:00')",
+    "currentDate": "new Date('2024-05-01T21:44:39')"
+}
+----
+---
+
+Response processed through the Mozilla Rhino for Java JS evaluator, and subsequent GTFS compliant date formatting.
+
+----
+{
+    "departureTime": "20240503",
+    "currentDate": "20240501"
+}
+----
+
+---
+Follow up GPT-4 Prompt:
+----
+Given the following API
+    @RequestMapping(
+        value = "/planTrip",
+        method = RequestMethod.POST,
+        produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public ArrayList <ArrayList <ArrayList<Stoptime>>>  planTrip(
+            @RequestBody TripPlan plan)
+
+Where TripPlan has the following structure:
+
+   @Data
+    public class TripPlan {
+        private String travelDate;
+        private String origStation;
+        private String origArrivalTimeLow;
+        private String origArrivalTimeHigh;
+        private String destStation;
+        private String destArrivalTimeLow;
+        private String destArrivalTimeHigh;
+    }
+
+and where where the relevant dates in the format the API expects are as follows
+
+ {
+    "departureTime": "20240503",
+    "currentDate": "20240501"
+}
+
+and all the time fields must have the format '06:46:00'.
+
+Give me the JSON payload to pass to this API to get the trip plan for the following user request:
+
+"I am going to leave from Westwood train station in NJ to go to point pleasant NJ after 9am on Friday"?
+----
+
+---
+
+Machine readable response from GPT-4 to pass to the API provided by the https://github.com/tguless/neo4j-gtfs/blob/e355ad7265efb374cec2950dbf4655f62f88fb16/complete/src/main/java/com/popameeting/gtfs/neo4j/Neo4jWebServiceController.java#L105[/plantTrip] endpoint of the neo4j-gtfs API:
+
+----
+{
+    "travelDate": "20240503",
+    "origStation": "Westwood",
+    "origArrivalTimeLow": "09:00:00",
+    "origArrivalTimeHigh": "",
+    "destStation": "Point Pleasant",
+    "destArrivalTimeLow": "",
+    "destArrivalTimeHigh": ""
+}
+----
+
+
