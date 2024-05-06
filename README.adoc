@@ -119,5 +119,6 @@ Machine readable response from GPT-4 to pass to the API provided by the https://
 ----
 
 Effectively so far we have accomplished the following:
+
 image::nl_to_json.png[natural_language_to_json]
 
