@@ -41,7 +41,7 @@ public class ChatbotController {
     ChatClient chatClient;
 
     @GetMapping("/chatbot")
-    public String chatbot(@RequestParam(value = "message", defaultValue = "I am going to leave from Westwood train station in NJ to go to point pleasant NJ after 9am on Friday") String message) {
+    public String chatbot(@RequestParam(value = "message", defaultValue = "I am going to leave from Woodridge train station in NJ to go to Hoboken NJ between 7 and 8 am today  what are my train options? ") String message) {
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("EEE MMM dd yyyy HH:mm:ss 'GMT'Z (z)");
 
@@ -103,15 +103,72 @@ public class ChatbotController {
 
         logger.info("Sending Prompt to OpenAI: \n"+ chatprompt);
 
-        String finalResult = chatClient.call(chatprompt);
+        String neo4jApiPrompt = chatClient.call(chatprompt);
 
-        if (finalResult.contains("```")) {
-            finalResult =  getTextBetweenMarkers(finalResult).get(0);
+        if (neo4jApiPrompt.contains("```")) {
+            neo4jApiPrompt =  getTextBetweenMarkers(neo4jApiPrompt).get(0);
         }
 
-        logger.info("Response Returned from OpenAI: \n" + finalResult);
+        String neo4jApiRespons = handleGPT4ResponseTest(neo4jApiPrompt);
 
-        return finalResult;
+        String nlResponseToUserPrompt = "Convert this JSON payload of travel itinary to natural language " +    neo4jApiRespons;
+
+        String nlResponseToUserResponse =   chatClient.call(nlResponseToUserPrompt);
+
+        logger.info("Response Returned from OpenAI: \n" + nlResponseToUserResponse);
+
+        return nlResponseToUserResponse;
+    }
+
+    public String  handleGPT4ResponseTest(String finalResult ) {
+        return "[\n" +
+                "    [\n" +
+                "        {\n" +
+                "            \"arrivalTime\": \"07:43:00\",\n" +
+                "            \"departureTime\": \"07:43:00\",\n" +
+                "            \"stopName\": \"WOOD-RIDGE\",\n" +
+                "            \"stopSequence\": 15,\n" +
+                "            \"tripId\": \"2815\"\n" +
+                "        },\n" +
+                "        {\n" +
+                "            \"arrivalTime\": \"07:54:00\",\n" +
+                "            \"departureTime\": \"07:54:00\",\n" +
+                "            \"stopName\": \"FRANK R LAUTENBERG SECAUCUS LOWER LEVEL\",\n" +
+                "            \"stopSequence\": 16,\n" +
+                "            \"tripId\": \"2815\"\n" +
+                "        },\n" +
+                "        {\n" +
+                "            \"arrivalTime\": \"08:05:00\",\n" +
+                "            \"departureTime\": \"08:05:00\",\n" +
+                "            \"stopName\": \"HOBOKEN\",\n" +
+                "            \"stopSequence\": 17,\n" +
+                "            \"tripId\": \"2815\"\n" +
+                "        }\n" +
+                "    ],\n" +
+                "    [\n" +
+                "        {\n" +
+                "            \"arrivalTime\": \"07:27:00\",\n" +
+                "            \"departureTime\": \"07:27:00\",\n" +
+                "            \"stopName\": \"WOOD-RIDGE\",\n" +
+                "            \"stopSequence\": 16,\n" +
+                "            \"tripId\": \"2821\"\n" +
+                "        },\n" +
+                "        {\n" +
+                "            \"arrivalTime\": \"07:38:00\",\n" +
+                "            \"departureTime\": \"07:38:00\",\n" +
+                "            \"stopName\": \"FRANK R LAUTENBERG SECAUCUS LOWER LEVEL\",\n" +
+                "            \"stopSequence\": 17,\n" +
+                "            \"tripId\": \"2821\"\n" +
+                "        },\n" +
+                "        {\n" +
+                "            \"arrivalTime\": \"07:49:00\",\n" +
+                "            \"departureTime\": \"07:49:00\",\n" +
+                "            \"stopName\": \"HOBOKEN\",\n" +
+                "            \"stopSequence\": 18,\n" +
+                "            \"tripId\": \"2821\"\n" +
+                "        }\n" +
+                "    ]\n" +
+                "]";
     }
 
     private void evaluateAndReplace(JSONObject json)  {

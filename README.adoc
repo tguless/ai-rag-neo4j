@@ -15,14 +15,13 @@ v1.2, 2016-02-15
 :sectanchors: ad
 
 
-
 == Project Overview
 
-image::nl_to_json.png[natural_language_to_json]
+image::nl_to_nl.png[natural_language_to_natural_language]
 
-This https://spring.io/projects/spring-ai[Spring AI] based project is meant to demonstrate how https://en.wikipedia.org/wiki/Prompt_engineering#Retrieval-augmented_generation[Retrieval Augmented Generation (RAG)] can be used to generate a request to a https://en.wikipedia.org/wiki/GTFS[GTFS] API as provided by the project https://github.com/tguless/neo4j-gtfs[neo4j-gtfs] using Natural Language.
+This https://spring.io/projects/spring-ai[Spring AI] based project is meant to demonstrate how https://en.wikipedia.org/wiki/Prompt_engineering#Retrieval-augmented_generation[Retrieval Augmented Generation (RAG)] can be used to generate a JSON formatted request to the https://en.wikipedia.org/wiki/GTFS[GTFS] API as provided by the project https://github.com/tguless/neo4j-gtfs[neo4j-gtfs] using Natural Language.
 
-The computer readable response from the API can then be narrated back to the user in Natural Language using GPT.
+The computer readable response from the API can then be narrated back to the user in Natural Language by leveraging OpenAI GPT-4.
 
 The database and API used for performing retrievals rely on the project hosted at https://github.com/tguless/neo4j-gtfs[neo4j-gtfs] originally developed by @tguless in 2016 to help calculate travel plans using the open GTFS transit plan file format by leveraging a https://en.wikipedia.org/wiki/Neo4j[Neo4j graph database].
 
@@ -119,4 +118,6 @@ Machine readable response from GPT-4 to pass to the API provided by the https://
 }
 ----
 
+Effectively so far we have accomplished the following:
+image::nl_to_json.png[natural_language_to_json]
 
