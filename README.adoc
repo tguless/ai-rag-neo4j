@@ -31,7 +31,7 @@ Initial GPT-4 Prompt:
 ----
 Today is Wed May 01 2024 21:44:39 GMT-0400 (EDT). Given the prompt:
 
-"I am going to leave from Westwood train station in NJ to go to point pleasant NJ after 9am on Friday"
+"I am going to leave from Westwood train station in NJ to go Hoboekn NJ after 9am on Friday"
 
 I need to convert any relevant dates in the prompt (there may be multiple) to Javascript Date format.
 
@@ -47,9 +47,9 @@ Make sure to only return properly formatted json and nothing else in your respon
 Initial GPT-4 Prompt Response:
 
 ----
-{
-    "departureTime": "new Date('2024-05-03T09:00:00')",
-    "currentDate": "new Date('2024-05-01T21:44:39')"
+ {
+    "departureDateStart": "20240521",
+    "departureDateEnd": "20240521"
 }
 ----
 ---
@@ -64,7 +64,7 @@ Response processed through the Mozilla Rhino for Java JS evaluator, and subseque
 ----
 
 ---
-Follow up GPT-4 Prompt:
+Program then generates a follow up GPT-4 Prompt:
 ----
 Given the following API
     @RequestMapping(
@@ -112,7 +112,7 @@ Machine readable response from GPT-4 to pass to the API provided by the https://
     "origStation": "Westwood",
     "origArrivalTimeLow": "09:00:00",
     "origArrivalTimeHigh": "",
-    "destStation": "Point Pleasant",
+    "destStation": "Hoboken",
     "destArrivalTimeLow": "",
     "destArrivalTimeHigh": ""
 }
@@ -122,4 +122,243 @@ Effectively so far we have accomplished the following:
 
 image::nl_to_json.png[natural_language_to_json]
 
-Now we can post the
+Now our program will post the above payload to localhost:8080/customrest/planTripNoTransfer which will be served up by the project https://github.com/tguless/neo4j-gtfs[neo4j-gtfs].
+
+The endpoint will respond with the payload:
+
+----
+[
+    [
+        [
+            {
+                "arrivalTime": "07:47:00",
+                "departureTime": "07:47:00",
+                "stopName": "WESTWOOD",
+                "stopSequence": 8,
+                "tripId": "4225"
+            },
+            {
+                "arrivalTime": "07:51:00",
+                "departureTime": "07:51:00",
+                "stopName": "ORADELL",
+                "stopSequence": 9,
+                "tripId": "4225"
+            },
+            {
+                "arrivalTime": "07:55:00",
+                "departureTime": "07:55:00",
+                "stopName": "RIVER EDGE",
+                "stopSequence": 10,
+                "tripId": "4225"
+            },
+            {
+                "arrivalTime": "07:59:00",
+                "departureTime": "07:59:00",
+                "stopName": "NEW BRIDGE LANDING",
+                "stopSequence": 11,
+                "tripId": "4225"
+            },
+            {
+                "arrivalTime": "08:03:00",
+                "departureTime": "08:03:00",
+                "stopName": "ANDERSON STREET",
+                "stopSequence": 12,
+                "tripId": "4225"
+            },
+            {
+                "arrivalTime": "08:06:00",
+                "departureTime": "08:06:00",
+                "stopName": "ESSEX STREET",
+                "stopSequence": 13,
+                "tripId": "4225"
+            },
+            {
+                "arrivalTime": "08:09:00",
+                "departureTime": "08:09:00",
+                "stopName": "TETERBORO",
+                "stopSequence": 14,
+                "tripId": "4225"
+            },
+            {
+                "arrivalTime": "08:13:00",
+                "departureTime": "08:13:00",
+                "stopName": "WOOD-RIDGE",
+                "stopSequence": 15,
+                "tripId": "4225"
+            },
+            {
+                "arrivalTime": "08:23:00",
+                "departureTime": "08:23:00",
+                "stopName": "FRANK R LAUTENBERG SECAUCUS LOWER LEVEL",
+                "stopSequence": 16,
+                "tripId": "4225"
+            },
+            {
+                "arrivalTime": "08:35:00",
+                "departureTime": "08:35:00",
+                "stopName": "HOBOKEN",
+                "stopSequence": 17,
+                "tripId": "4225"
+            }
+        ]
+    ],
+    [
+        [
+            {
+                "arrivalTime": "07:31:00",
+                "departureTime": "07:31:00",
+                "stopName": "WESTWOOD",
+                "stopSequence": 8,
+                "tripId": "4213"
+            },
+            {
+                "arrivalTime": "07:34:00",
+                "departureTime": "07:34:00",
+                "stopName": "EMERSON",
+                "stopSequence": 9,
+                "tripId": "4213"
+            },
+            {
+                "arrivalTime": "07:38:00",
+                "departureTime": "07:38:00",
+                "stopName": "ORADELL",
+                "stopSequence": 10,
+                "tripId": "4213"
+            },
+            {
+                "arrivalTime": "07:42:00",
+                "departureTime": "07:42:00",
+                "stopName": "RIVER EDGE",
+                "stopSequence": 11,
+                "tripId": "4213"
+            },
+            {
+                "arrivalTime": "07:47:00",
+                "departureTime": "07:47:00",
+                "stopName": "NEW BRIDGE LANDING",
+                "stopSequence": 12,
+                "tripId": "4213"
+            },
+            {
+                "arrivalTime": "08:04:00",
+                "departureTime": "08:04:00",
+                "stopName": "FRANK R LAUTENBERG SECAUCUS LOWER LEVEL",
+                "stopSequence": 13,
+                "tripId": "4213"
+            },
+            {
+                "arrivalTime": "08:16:00",
+                "departureTime": "08:16:00",
+                "stopName": "HOBOKEN",
+                "stopSequence": 14,
+                "tripId": "4213"
+            }
+        ]
+    ],
+    [
+        [
+            {
+                "arrivalTime": "07:14:00",
+                "departureTime": "07:14:00",
+                "stopName": "WESTWOOD",
+                "stopSequence": 7,
+                "tripId": "4219"
+            },
+            {
+                "arrivalTime": "07:17:00",
+                "departureTime": "07:17:00",
+                "stopName": "EMERSON",
+                "stopSequence": 8,
+                "tripId": "4219"
+            },
+            {
+                "arrivalTime": "07:21:00",
+                "departureTime": "07:21:00",
+                "stopName": "ORADELL",
+                "stopSequence": 9,
+                "tripId": "4219"
+            },
+            {
+                "arrivalTime": "07:25:00",
+                "departureTime": "07:25:00",
+                "stopName": "RIVER EDGE",
+                "stopSequence": 10,
+                "tripId": "4219"
+            },
+            {
+                "arrivalTime": "07:29:00",
+                "departureTime": "07:29:00",
+                "stopName": "NEW BRIDGE LANDING",
+                "stopSequence": 11,
+                "tripId": "4219"
+            },
+            {
+                "arrivalTime": "07:33:00",
+                "departureTime": "07:33:00",
+                "stopName": "ANDERSON STREET",
+                "stopSequence": 12,
+                "tripId": "4219"
+            },
+            {
+                "arrivalTime": "07:36:00",
+                "departureTime": "07:36:00",
+                "stopName": "ESSEX STREET",
+                "stopSequence": 13,
+                "tripId": "4219"
+            },
+            {
+                "arrivalTime": "07:39:00",
+                "departureTime": "07:39:00",
+                "stopName": "TETERBORO",
+                "stopSequence": 14,
+                "tripId": "4219"
+            },
+            {
+                "arrivalTime": "07:43:00",
+                "departureTime": "07:43:00",
+                "stopName": "WOOD-RIDGE",
+                "stopSequence": 15,
+                "tripId": "4219"
+            },
+            {
+                "arrivalTime": "07:54:00",
+                "departureTime": "07:54:00",
+                "stopName": "FRANK R LAUTENBERG SECAUCUS LOWER LEVEL",
+                "stopSequence": 16,
+                "tripId": "4219"
+            },
+            {
+                "arrivalTime": "08:06:00",
+                "departureTime": "08:06:00",
+                "stopName": "HOBOKEN",
+                "stopSequence": 17,
+                "tripId": "4219"
+            }
+        ]
+    ]
+]
+----
+
+And then our program invokes another ChatGPT API call to trasnlate the JSON back to english:
+
+----
+The travel itinerary is as follows:
+
+1. Trip ID 4225:
+- The journey begins at WESTWOOD, with both arrival and departure time at 07:47:00.
+- The next stop is ORADELL, with both arrival and departure time at 07:51:00.
+- Then the trip continues to RIVER EDGE at 07:55:00, NEW BRIDGE LANDING at 07:59:00, ANDERSON STREET at 08:03:00, ESSEX STREET at 08:06:00, TETERBORO at 08:09:00 and WOOD-RIDGE at 08:13:00.
+- The trip then heads to FRANK R LAUTENBERG SECAUCUS LOWER LEVEL at 08:23:00 before finally ending at HOBOKEN at 08:35:00.
+
+2. Trip ID 4213:
+- The journey begins at WESTWOOD, with both arrival and departure time at 07:31:00.
+- The next stop is EMERSON at 07:34:00, followed by ORADELL at 07:38:00, RIVER EDGE at 07:42:00, and NEW BRIDGE LANDING at 07:47:00.
+- The trip then heads to FRANK R LAUTENBERG SECAUCUS LOWER LEVEL at 08:04:00 before finally ending at HOBOKEN at 08:16:00.
+
+3. Trip ID 4219:
+- The journey begins at WESTWOOD, with both arrival and departure time at 07:14:00.
+- The next stop is EMERSON at 07:17:00, followed by ORADELL at 07:21:00, RIVER EDGE at 07:25:00, NEW BRIDGE LANDING at 07:29:00, ANDERSON STREET at 07:33:00, ESSEX STREET at 07:36:00, and TETERBORO at 07:39:00.
+- The trip then heads to WOOD-RIDGE at 07:43:00 and FRANK R LAUTENBERG SECAUCUS LOWER LEVEL at 07:54:00 before finally ending at HOBOKEN at 08:06:00.
+----
+
+Note, we really don't need to utilize the OpenAI GPT-4 API to translate the last JSON payload back into english.  It should be easy enough to use it to populate a templated text meant to be consumed by humans.
