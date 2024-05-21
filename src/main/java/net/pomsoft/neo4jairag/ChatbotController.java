@@ -3,7 +3,7 @@ package net.pomsoft.neo4jairag;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.pomsoft.neo4jairag.integration.Neo4jServiceCalls;
-import net.pomsoft.neo4jairag.integration.Stoptime;
+import net.pomsoft.neo4jairag.integration.PlanResult;
 import net.pomsoft.neo4jairag.integration.TripPlan;
 import org.json.JSONObject;
 import org.mozilla.javascript.IdScriptableObject;
@@ -107,7 +107,9 @@ public class ChatbotController {
                         "and where where the relevant dates in the format the API expects are as follows \n " +
                         datesJsonObject.toString(4) + "\n" +
                         "and all the time fields must have the format '06:46:00' \n" +
-                        "and if a distination time window is not provided, both destArrivalTimeLow and destArrivalTimeHigh should be set to an empty string \n" +
+                        "and if a destination time window is not provided, either or both destArrivalTimeLow and destArrivalTimeHigh should be set to an empty string \n" +
+                        "similarly if a origin station departure time window is not provided, either or both origArrivalTimeLow and origArrivalTimeHigh should be set to an empty string \n" +
+                        "for the origStation and destStation only assign a string with the city name and nothing else \n" +
                         "can you give me the JSON payload to pass to this API to get the trip plan for the following \n" +
                         "user request \"" + message + "\"?";
 
@@ -121,9 +123,17 @@ public class ChatbotController {
 
         //String neo4jApiResponse = handleGPT4ResponseTest(neo4jApiPrompt);
 
-        ArrayList <ArrayList <ArrayList<Stoptime>>> neo4jApiResponse = neo4jServiceCalls.planTripNoTransfer(jsonService.convertFromJson(neo4jApiPrompt, TripPlan.class));
+        logger.info("Response Returned from OpenAI: \n" + neo4jApiPrompt);
 
-        String nlResponseToUserPrompt = "Convert this JSON payload of travel itinary to natural language " +  jsonService.convertToJson(neo4jApiResponse);
+        ArrayList <ArrayList <ArrayList<PlanResult>>> neo4jApiResponse = neo4jServiceCalls.planTripNoTransfer(jsonService.convertFromJson(neo4jApiPrompt, TripPlan.class));
+
+        String neo4jResponse = jsonService.convertToJson(neo4jApiResponse);
+
+        logger.info("Response Returned from Neo4j: \n" + neo4jResponse);
+
+        String nlResponseToUserPrompt = "Convert this JSON payload of travel itinary to natural language " +  neo4jResponse;
+
+        logger.info("Sending Prompt to OpenAI: \n" + nlResponseToUserPrompt);
 
         String nlResponseToUserResponse =   chatClient.call(nlResponseToUserPrompt);
 

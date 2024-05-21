@@ -10,5 +10,5 @@ import java.util.ArrayList;
 @FeignClient(value = "BackendService", url = "${pomsoft.net.neo4jsvc.url}")
 public interface Neo4jServiceCalls {
     @PostMapping(value="/customrest/planTripNoTransfer", consumes = "application/json")
-    public ArrayList <ArrayList <ArrayList<Stoptime>>> planTripNoTransfer( @RequestBody TripPlan plan);
+    public ArrayList <ArrayList <ArrayList<PlanResult>>> planTripNoTransfer( @RequestBody TripPlan plan);
 }
