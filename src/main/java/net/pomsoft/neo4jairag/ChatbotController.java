@@ -11,9 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.ChatClient;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
@@ -49,69 +47,69 @@ public class ChatbotController {
     @Autowired
     JsonService jsonService;
 
-    @GetMapping("/chatbot")
-    public String chatbot(@RequestParam(value = "message", defaultValue = "I am going to leave from Westwood train station in NJ to go to Hoboken NJ between 7 and 8 am today  what are my train options? ") String message) throws Exception {
+    @PostMapping("/chatbot")
+    public String chatbot(@RequestBody String message) throws Exception {
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("EEE MMM dd yyyy HH:mm:ss 'GMT'Z (z)");
 
-        String datesRequiredMessage = "Today is " + dateFormat.format(new Date()) +". Given the prompt \"" + message + "\" \n" +
-                "I need to convert any relevant dates in the prompt (there may be multiple) to Javascript Date format \n" +
-                ", to do it, give me the JS commands to execute without using variables in the format:  {\n" +
-                "     '{datetyperequested}' : '{js command to run to set a js variable to the date value as Date object}', \n" +
-                "     '{2nd datetyperequested}' : '{js command to run to set a js variable to the date value as Date object}' \n" +
-                "}\n" +
-                "make sure to only return properly formatted json and nothing else in your response. Make sure all the \n" +
-                "required dates are included in the JSON object.";
-
+        String datesRequiredMessage = """
+        Today is %s. 
+        
+        Given the prompt: 
+        "%s"
+        
+        I need to convert any relevant dates in the prompt (there may be multiple) to Javascript Date format.        
+        To do it, give me the JS commands to execute without using variables in the format:
+          
+        {
+             '{datetyperequested}' : '{js command to run to set a js variable to the date value as Date object}',
+             '{2nd datetyperequested}' : '{js command to run to set a js variable to the date value as Date object}'
+        }
+        
+        Make sure to only return properly formatted json and nothing else in your response. Make sure all the
+        required dates are included in the JSON object.
+        """.formatted(dateFormat.format(new Date()), message);
+        
         logger.info("Sending Prompt to OpenAI: \n" + datesRequiredMessage);
 
         String datesJson = chatClient.call(datesRequiredMessage);
         datesJson = getTextBetweenMarkers(datesJson).get(0);
         JSONObject datesJsonObject = new JSONObject(datesJson);
         logger.info("Response Returned from OpenAI: \n" + datesJsonObject.toString(4));
-        /*
-        Example output from prompt   "I am going to leave from Westwood train station in NJ to go to point pleasant NJ after 9am tomorrow"
-        {
-            'currentDate': 'new Date()',
-            'tomorrowDate': 'new Date(new Date().setDate(new Date().getDate() + 1))'
-        }
-        */
+
         evaluateAndReplace(datesJsonObject);
         logger.info("Response Run Through JS Evaluator: \n" + datesJsonObject.toString(4));
-        /*
-            Example output from evaluate call:
-             {
-                "departureDate":"20240501",
-                "arrivalDate":"20240501"
-             }
-         */
 
-        String chatprompt =
-                "Given the following API \n" +
-                        "    @RequestMapping(  value = \"/planTrip\", " +
-                        "                      method = RequestMethod.POST, " +
-                        "                      produces = MediaType.APPLICATION_JSON_VALUE)\n" +
-                        "    @ResponseBody\n" +
-                        "    public ArrayList <ArrayList <ArrayList<Stoptime>>>  planTrip( @RequestBody TripPlan plan)\n " +
-                        "where TripPlan has the following structure \n   " +
-                        "@Data\n" +
-                        "public class TripPlan {\n" +
-                        "    private String travelDate;\n" +
-                        "    private String origStation;\n" +
-                        "    private String origArrivalTimeLow;\n" +
-                        "    private String origArrivalTimeHigh;\n" +
-                        "    private String destStation;\n" +
-                        "    private String destArrivalTimeLow;\n" +
-                        "    private String destArrivalTimeHigh;\n" +
-                        "}\n" +
-                        "and where where the relevant dates in the format the API expects are as follows \n " +
-                        datesJsonObject.toString(4) + "\n" +
-                        "and all the time fields must have the format '06:46:00' \n" +
-                        "and if a destination time window is not provided, either or both destArrivalTimeLow and destArrivalTimeHigh should be set to an empty string \n" +
-                        "similarly if a origin station departure time window is not provided, either or both origArrivalTimeLow and origArrivalTimeHigh should be set to an empty string \n" +
-                        "for the origStation and destStation only assign a string with the city name and nothing else \n" +
-                        "can you give me the JSON payload to pass to this API to get the trip plan for the following \n" +
-                        "user request \"" + message + "\"?";
+        String chatprompt = """
+        Given the following API
+            @RequestMapping(value = "/planTrip", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+            @ResponseBody
+            public ArrayList<ArrayList<ArrayList<Stoptime>>> planTrip(@RequestBody TripPlan plan)
+            
+        Where TripPlan has the following structure:
+        
+            @Data
+            public class TripPlan {
+                private String travelDate;
+                private String origStation;
+                private String origArrivalTimeLow;
+                private String origArrivalTimeHigh;
+                private String destStation;
+                private String destArrivalTimeLow;
+                private String destArrivalTimeHigh;
+            }
+            
+        and where the relevant dates in the format the API expects are as follows:
+        
+        %s
+        
+        and all the time fields must have the format '06:46:00'
+        and if a destination time window is not provided, either or both destArrivalTimeLow and destArrivalTimeHigh should be set to an empty string
+        similarly if an origin station departure time window is not provided, either or both origArrivalTimeLow and origArrivalTimeHigh should be set to an empty string
+        for the origStation and destStation only assign a string with the city name and nothing else
+        can you give me the JSON payload to pass to this API to get the trip plan for the following
+        user request "%s"?
+        """.formatted(datesJsonObject.toString(4), message);
 
         logger.info("Sending Prompt to OpenAI: \n"+ chatprompt);
 
@@ -121,15 +119,12 @@ public class ChatbotController {
             neo4jApiPrompt =  getTextBetweenMarkers(neo4jApiPrompt).get(0);
         }
 
-        //String neo4jApiResponse = handleGPT4ResponseTest(neo4jApiPrompt);
 
         logger.info("Response Returned from OpenAI: \n" + neo4jApiPrompt);
 
         ArrayList <ArrayList <ArrayList<PlanResult>>> neo4jApiResponse = neo4jServiceCalls.planTripNoTransfer(jsonService.convertFromJson(neo4jApiPrompt, TripPlan.class));
 
         String neo4jResponse = jsonService.convertToJson(neo4jApiResponse);
-
-        logger.info("Response Returned from Neo4j: \n" + neo4jResponse);
 
         String nlResponseToUserPrompt = "Convert this JSON payload of travel itinary to natural language " +  neo4jResponse;
 
@@ -142,61 +137,7 @@ public class ChatbotController {
         return nlResponseToUserResponse;
     }
 
-    public String handleGPT4ResponseTest(String finalResult) {
-        return """
-        [
-            [
-                {
-                    "arrivalTime": "07:43:00",
-                    "departureTime": "07:43:00",
-                    "stopName": "WOOD-RIDGE",
-                    "stopSequence": 15,
-                    "tripId": "2815"
-                },
-                {
-                    "arrivalTime": "07:54:00",
-                    "departureTime": "07:54:00",
-                    "stopName": "FRANK R LAUTENBERG SECAUCUS LOWER LEVEL",
-                    "stopSequence": 16,
-                    "tripId": "2815"
-                },
-                {
-                    "arrivalTime": "08:05:00",
-                    "departureTime": "08:05:00",
-                    "stopName": "HOBOKEN",
-                    "stopSequence": 17,
-                    "tripId": "2815"
-                }
-            ],
-            [
-                {
-                    "arrivalTime": "07:27:00",
-                    "departureTime": "07:27:00",
-                    "stopName": "WOOD-RIDGE",
-                    "stopSequence": 16,
-                    "tripId": "2821"
-                },
-                {
-                    "arrivalTime": "07:38:00",
-                    "departureTime": "07:38:00",
-                    "stopName": "FRANK R LAUTENBERG SECAUCUS LOWER LEVEL",
-                    "stopSequence": 17,
-                    "tripId": "2821"
-                },
-                {
-                    "arrivalTime": "07:49:00",
-                    "departureTime": "07:49:00",
-                    "stopName": "HOBOKEN",
-                    "stopSequence": 18,
-                    "tripId": "2821"
-                }
-            ]
-        ]""";
-    }
-
     private void evaluateAndReplace(JSONObject json)  {
-        ScriptEngineManager manager = new ScriptEngineManager();
-        ScriptEngine engine = manager.getEngineByName("nashorn");
 
         json.keySet().forEach(key -> {
             Context ctx = Context.enter();
