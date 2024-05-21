@@ -2,6 +2,9 @@ package net.pomsoft.neo4jairag;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.pomsoft.neo4jairag.integration.Neo4jServiceCalls;
+import net.pomsoft.neo4jairag.integration.Stoptime;
+import net.pomsoft.neo4jairag.integration.TripPlan;
 import org.json.JSONObject;
 import org.mozilla.javascript.IdScriptableObject;
 import org.slf4j.Logger;
@@ -40,8 +43,14 @@ public class ChatbotController {
     @Autowired
     ChatClient chatClient;
 
+    @Autowired
+    Neo4jServiceCalls neo4jServiceCalls;
+
+    @Autowired
+    JsonService jsonService;
+
     @GetMapping("/chatbot")
-    public String chatbot(@RequestParam(value = "message", defaultValue = "I am going to leave from Woodridge train station in NJ to go to Hoboken NJ between 7 and 8 am today  what are my train options? ") String message) {
+    public String chatbot(@RequestParam(value = "message", defaultValue = "I am going to leave from Westwood train station in NJ to go to Hoboken NJ between 7 and 8 am today  what are my train options? ") String message) throws Exception {
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("EEE MMM dd yyyy HH:mm:ss 'GMT'Z (z)");
 
@@ -98,6 +107,7 @@ public class ChatbotController {
                         "and where where the relevant dates in the format the API expects are as follows \n " +
                         datesJsonObject.toString(4) + "\n" +
                         "and all the time fields must have the format '06:46:00' \n" +
+                        "and if a distination time window is not provided, both destArrivalTimeLow and destArrivalTimeHigh should be set to an empty string \n" +
                         "can you give me the JSON payload to pass to this API to get the trip plan for the following \n" +
                         "user request \"" + message + "\"?";
 
@@ -109,9 +119,11 @@ public class ChatbotController {
             neo4jApiPrompt =  getTextBetweenMarkers(neo4jApiPrompt).get(0);
         }
 
-        String neo4jApiRespons = handleGPT4ResponseTest(neo4jApiPrompt);
+        //String neo4jApiResponse = handleGPT4ResponseTest(neo4jApiPrompt);
 
-        String nlResponseToUserPrompt = "Convert this JSON payload of travel itinary to natural language " +    neo4jApiRespons;
+        ArrayList <ArrayList <ArrayList<Stoptime>>> neo4jApiResponse = neo4jServiceCalls.planTripNoTransfer(jsonService.convertFromJson(neo4jApiPrompt, TripPlan.class));
+
+        String nlResponseToUserPrompt = "Convert this JSON payload of travel itinary to natural language " +  jsonService.convertToJson(neo4jApiResponse);
 
         String nlResponseToUserResponse =   chatClient.call(nlResponseToUserPrompt);
 
@@ -120,55 +132,56 @@ public class ChatbotController {
         return nlResponseToUserResponse;
     }
 
-    public String  handleGPT4ResponseTest(String finalResult ) {
-        return "[\n" +
-                "    [\n" +
-                "        {\n" +
-                "            \"arrivalTime\": \"07:43:00\",\n" +
-                "            \"departureTime\": \"07:43:00\",\n" +
-                "            \"stopName\": \"WOOD-RIDGE\",\n" +
-                "            \"stopSequence\": 15,\n" +
-                "            \"tripId\": \"2815\"\n" +
-                "        },\n" +
-                "        {\n" +
-                "            \"arrivalTime\": \"07:54:00\",\n" +
-                "            \"departureTime\": \"07:54:00\",\n" +
-                "            \"stopName\": \"FRANK R LAUTENBERG SECAUCUS LOWER LEVEL\",\n" +
-                "            \"stopSequence\": 16,\n" +
-                "            \"tripId\": \"2815\"\n" +
-                "        },\n" +
-                "        {\n" +
-                "            \"arrivalTime\": \"08:05:00\",\n" +
-                "            \"departureTime\": \"08:05:00\",\n" +
-                "            \"stopName\": \"HOBOKEN\",\n" +
-                "            \"stopSequence\": 17,\n" +
-                "            \"tripId\": \"2815\"\n" +
-                "        }\n" +
-                "    ],\n" +
-                "    [\n" +
-                "        {\n" +
-                "            \"arrivalTime\": \"07:27:00\",\n" +
-                "            \"departureTime\": \"07:27:00\",\n" +
-                "            \"stopName\": \"WOOD-RIDGE\",\n" +
-                "            \"stopSequence\": 16,\n" +
-                "            \"tripId\": \"2821\"\n" +
-                "        },\n" +
-                "        {\n" +
-                "            \"arrivalTime\": \"07:38:00\",\n" +
-                "            \"departureTime\": \"07:38:00\",\n" +
-                "            \"stopName\": \"FRANK R LAUTENBERG SECAUCUS LOWER LEVEL\",\n" +
-                "            \"stopSequence\": 17,\n" +
-                "            \"tripId\": \"2821\"\n" +
-                "        },\n" +
-                "        {\n" +
-                "            \"arrivalTime\": \"07:49:00\",\n" +
-                "            \"departureTime\": \"07:49:00\",\n" +
-                "            \"stopName\": \"HOBOKEN\",\n" +
-                "            \"stopSequence\": 18,\n" +
-                "            \"tripId\": \"2821\"\n" +
-                "        }\n" +
-                "    ]\n" +
-                "]";
+    public String handleGPT4ResponseTest(String finalResult) {
+        return """
+        [
+            [
+                {
+                    "arrivalTime": "07:43:00",
+                    "departureTime": "07:43:00",
+                    "stopName": "WOOD-RIDGE",
+                    "stopSequence": 15,
+                    "tripId": "2815"
+                },
+                {
+                    "arrivalTime": "07:54:00",
+                    "departureTime": "07:54:00",
+                    "stopName": "FRANK R LAUTENBERG SECAUCUS LOWER LEVEL",
+                    "stopSequence": 16,
+                    "tripId": "2815"
+                },
+                {
+                    "arrivalTime": "08:05:00",
+                    "departureTime": "08:05:00",
+                    "stopName": "HOBOKEN",
+                    "stopSequence": 17,
+                    "tripId": "2815"
+                }
+            ],
+            [
+                {
+                    "arrivalTime": "07:27:00",
+                    "departureTime": "07:27:00",
+                    "stopName": "WOOD-RIDGE",
+                    "stopSequence": 16,
+                    "tripId": "2821"
+                },
+                {
+                    "arrivalTime": "07:38:00",
+                    "departureTime": "07:38:00",
+                    "stopName": "FRANK R LAUTENBERG SECAUCUS LOWER LEVEL",
+                    "stopSequence": 17,
+                    "tripId": "2821"
+                },
+                {
+                    "arrivalTime": "07:49:00",
+                    "departureTime": "07:49:00",
+                    "stopName": "HOBOKEN",
+                    "stopSequence": 18,
+                    "tripId": "2821"
+                }
+            ]
+        ]""";
     }
 
     private void evaluateAndReplace(JSONObject json)  {
