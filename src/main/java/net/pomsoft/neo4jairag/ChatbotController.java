@@ -69,7 +69,7 @@ public class ChatbotController {
         Make sure to only return properly formatted json and nothing else in your response. Make sure all the
         required dates are included in the JSON object.
         """.formatted(dateFormat.format(new Date()), message);
-        
+
         logger.info("Sending Prompt to OpenAI: \n" + datesRequiredMessage);
 
         String datesJson = chatClient.call(datesRequiredMessage);
