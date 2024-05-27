@@ -29,27 +29,29 @@ The database and API used for performing retrievals rely on the project hosted a
 
 Initial GPT-4 Prompt:
 ----
-Today is Wed May 01 2024 21:44:39 GMT-0400 (EDT). Given the prompt:
+Today is Mon May 27 2024 19:24:08 GMT-0400 (EDT).
 
-"I am going to leave from Westwood train station in NJ to go Hoboekn NJ after 9am on Friday"
+Given the prompt:
+"I am going to leave from Westwood train station in NJ to go to Hoboken NJ between 7 and 8 am tomorrow  what are my train options?"
 
 I need to convert any relevant dates in the prompt (there may be multiple) to Javascript Date format.
-
 To do it, give me the JS commands to execute without using variables in the format:
+
 {
      '{datetyperequested}' : '{js command to run to set a js variable to the date value as Date object}',
      '{2nd datetyperequested}' : '{js command to run to set a js variable to the date value as Date object}'
 }
 
-Make sure to only return properly formatted json and nothing else in your response. Make sure all the required dates are included in the JSON object.
+Make sure to only return properly formatted json and nothing else in your response. Make sure all the
+required dates are included in the JSON object.
 ----
 
 Initial GPT-4 Prompt Response:
 
 ----
- {
-    "departureDateStart": "20240521",
-    "departureDateEnd": "20240521"
+{
+    "departureTimeStart": "new Date(\"2024-05-28T07:00:00-04:00\")",
+    "departureTimeEnd": "new Date(\"2024-05-28T08:00:00-04:00\")"
 }
 ----
 ---
@@ -58,8 +60,8 @@ Response processed through the Mozilla Rhino for Java JS evaluator, and subseque
 
 ----
 {
-    "departureTime": "20240503",
-    "currentDate": "20240501"
+    "departureTimeStart": "20240528",
+    "departureTimeEnd": "20240528"
 }
 ----
 
@@ -67,17 +69,13 @@ Response processed through the Mozilla Rhino for Java JS evaluator, and subseque
 Program then generates a follow up GPT-4 Prompt:
 ----
 Given the following API
-    @RequestMapping(
-        value = "/planTrip",
-        method = RequestMethod.POST,
-        produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/planTrip", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public ArrayList <ArrayList <ArrayList<Stoptime>>>  planTrip(
-            @RequestBody TripPlan plan)
+    public ArrayList<ArrayList<ArrayList<Stoptime>>> planTrip(@RequestBody TripPlan plan)
 
 Where TripPlan has the following structure:
 
-   @Data
+    @Data
     public class TripPlan {
         private String travelDate;
         private String origStation;
@@ -88,18 +86,20 @@ Where TripPlan has the following structure:
         private String destArrivalTimeHigh;
     }
 
-and where where the relevant dates in the format the API expects are as follows
+and where the relevant dates in the format the API expects are as follows:
 
- {
-    "departureTime": "20240503",
-    "currentDate": "20240501"
+{
+    "departureTimeStart": "20240528",
+    "departureTimeEnd": "20240528"
 }
 
-and all the time fields must have the format '06:46:00'.
+and all the time fields must have the format '06:46:00'
 
-Give me the JSON payload to pass to this API to get the trip plan for the following user request:
+and if a destination time window is not provided, either or both destArrivalTimeLow and destArrivalTimeHigh should be set to an empty string.
 
-"I am going to leave from Westwood train station in NJ to go to point pleasant NJ after 9am on Friday"?
+Similarly if an origin station departure time window is not provided, either or both origArrivalTimeLow and origArrivalTimeHigh should be set to an empty string for the origStation and destStation.
+
+Only assign a string with the city name and nothing else can you give me the JSON payload to pass to this API to get the trip plan for the following user request "I am going to leave from Westwood train station in NJ to go to Hoboken NJ between 7 and 8 am tomorrow  what are my train options?"?
 ----
 
 ---
@@ -108,10 +108,10 @@ Machine readable response from GPT-4 to pass to the API provided by the https://
 
 ----
 {
-    "travelDate": "20240503",
+    "travelDate": "20240528",
     "origStation": "Westwood",
-    "origArrivalTimeLow": "09:00:00",
-    "origArrivalTimeHigh": "",
+    "origArrivalTimeLow": "07:00:00",
+    "origArrivalTimeHigh": "08:00:00",
     "destStation": "Hoboken",
     "destArrivalTimeLow": "",
     "destArrivalTimeHigh": ""
@@ -339,26 +339,16 @@ The endpoint will respond with the payload:
 ]
 ----
 
-And then our program invokes another ChatGPT API call to trasnlate the JSON back to english:
+And then our program invokes another ChatGPT API call to translate the JSON back to english:
 
 ----
-The travel itinerary is as follows:
+This is a travel itinerary for three different trips.
 
-1. Trip ID 4225:
-- The journey begins at WESTWOOD, with both arrival and departure time at 07:47:00.
-- The next stop is ORADELL, with both arrival and departure time at 07:51:00.
-- Then the trip continues to RIVER EDGE at 07:55:00, NEW BRIDGE LANDING at 07:59:00, ANDERSON STREET at 08:03:00, ESSEX STREET at 08:06:00, TETERBORO at 08:09:00 and WOOD-RIDGE at 08:13:00.
-- The trip then heads to FRANK R LAUTENBERG SECAUCUS LOWER LEVEL at 08:23:00 before finally ending at HOBOKEN at 08:35:00.
+The first trip, with trip ID 4225, starts at Westwood at 07:47. It then stops at Oradell at 07:51, River Edge at 07:55, New Bridge Landing at 07:59, Anderson Street at 08:03, Essex Street at 08:06, Teterboro at 08:09, Wood-Ridge at 08:13, Frank R Lautenberg Secaucus Lower Level at 08:23, and finally arrives at Hoboken at 08:35.
 
-2. Trip ID 4213:
-- The journey begins at WESTWOOD, with both arrival and departure time at 07:31:00.
-- The next stop is EMERSON at 07:34:00, followed by ORADELL at 07:38:00, RIVER EDGE at 07:42:00, and NEW BRIDGE LANDING at 07:47:00.
-- The trip then heads to FRANK R LAUTENBERG SECAUCUS LOWER LEVEL at 08:04:00 before finally ending at HOBOKEN at 08:16:00.
+The second trip, with trip ID 4213, begins at Westwood at 07:31. It then moves to Emerson at 07:34, Oradell at 07:38, River Edge at 07:42, New Bridge Landing at 07:47, Frank R Lautenberg Secaucus Lower Level at 08:04, and finally arrives at Hoboken at 08:16.
 
-3. Trip ID 4219:
-- The journey begins at WESTWOOD, with both arrival and departure time at 07:14:00.
-- The next stop is EMERSON at 07:17:00, followed by ORADELL at 07:21:00, RIVER EDGE at 07:25:00, NEW BRIDGE LANDING at 07:29:00, ANDERSON STREET at 07:33:00, ESSEX STREET at 07:36:00, and TETERBORO at 07:39:00.
-- The trip then heads to WOOD-RIDGE at 07:43:00 and FRANK R LAUTENBERG SECAUCUS LOWER LEVEL at 07:54:00 before finally ending at HOBOKEN at 08:06:00.
+The third trip, with trip ID 4219, starts at Westwood at 07:14. It then stops at Emerson at 07:17, Oradell at 07:21, River Edge at 07:25, New Bridge Landing at 07:29, Anderson Street at 07:33, Essex Street at 07:36, Teterboro at 07:39, Wood-Ridge at 07:43, Frank R Lautenberg Secaucus Lower Level at 07:54, and finally arrives at Hoboken at 08:06.
 ----
 
 Note, we really don't need to utilize the OpenAI GPT-4 API to translate the last JSON payload back into english.  It should be easy enough to use it to populate a templated text meant to be consumed by humans.
